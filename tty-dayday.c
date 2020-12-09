@@ -1,9 +1,9 @@
 /*
  * vim:ts=4:sw=4:expandtab
  *
- * tty-dayday.c: Entry
+ * tty-dayday.c: Countdown days Since and Until. Draw days using ncurses.
  *
- * Arthur  Chih-Chyuan Hwang (hwangcc@csie.nctu.edu.tw)
+ * Arthur: Chih-Chyuan Hwang (hwangcc@csie.nctu.edu.tw)
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,8 +36,8 @@ struct dayday
     int color;
 
     struct {
-        char *name;              /* Name of the event to count down */
-        struct tm date;         /* Date to count down */
+        char *name;              /* Name of the event to countdown */
+        struct tm date;         /* Date of the event */
         int dy, dm, dd, days;   /* delta year/mon/day and delta days */
     } event;
 
