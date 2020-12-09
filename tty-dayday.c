@@ -93,6 +93,16 @@ const int digit_pixels[][15] =
      {1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1}, /* 9 */
 };
 
+static void usage(void)
+{
+    fprintf(stdout, "Usage: tty-dayday -e NAME_OF_EVENT - d DATE_IN_MM/DD/YYYY [options]\n");
+    fprintf(stdout, "Options:\n");
+    fprintf(stdout, "  -s|--since        Count days SINCE the given date\n");
+    fprintf(stdout, "  -u|--until        Count days until the given date\n");
+    fprintf(stdout, "  -v|--version      Print the version number and exit\n");
+    fprintf(stdout, "  -h|--help         Print the help messages and exit\n");
+}
+
 static int init_windows(void)
 {
     initscr();
@@ -279,10 +289,13 @@ int main(int argc, char ** argv)
 
         switch (c) {
         case 'h':
+            usage();
+            return EXIT_SUCCESS;
             break;
 
         case 'v':
             fprintf(stdout, "Version %d.%d\n", ver_main, ver_min);
+            return EXIT_SUCCESS;
             break;
 
         case 'e':
