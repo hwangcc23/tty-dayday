@@ -150,6 +150,8 @@ static void draw_digit_in_window(WINDOW *win, int y, int x, int digit)
 
 static void draw_windows(void)
 {
+    int digit, pre_digit;
+
     wbkgdset(dayday.msg_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.msg_win, 0, 0, dayday.event.name);
 
@@ -158,10 +160,27 @@ static void draw_windows(void)
     wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.ymd_win, 0, 8, "YEAR");
 
-    draw_digit_in_window(dayday.ymd_win, 1, 1, dayday.event.dy / 1000);
-    draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 + DIGIT_WIDTH, (dayday.event.dy % 1000 ) / 100);
-    draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 * 2 + DIGIT_WIDTH * 2, (dayday.event.dy % 100) / 10);
-    draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 * 3 + DIGIT_WIDTH * 3, dayday.event.dy % 10);
+    /*
+     * Draw numbers to show the counting days.
+     * On drawing digits of the number, the zero in the number should be ignore
+     * to avoid users' confusion. For example, draw "  17" rather than "0017".
+     * In the implementation below, use digit and pre_digit to check whether
+     * the zero digit should be ignored or not.
+     */
+
+    digit = dayday.event.dy / 1000;
+    if (digit)
+        draw_digit_in_window(dayday.ymd_win, 1, 1, digit);
+    pre_digit = digit;
+    digit = (dayday.event.dy % 1000 ) / 100;
+    if (digit || (pre_digit && !digit))
+        draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 + DIGIT_WIDTH, digit);
+    pre_digit = pre_digit * 10 + digit;
+    digit = (dayday.event.dy % 100) / 10;
+    if (digit || (pre_digit && !digit))
+        draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 * 2 + DIGIT_WIDTH * 2, digit);
+    digit = dayday.event.dy % 10;
+    draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 * 3 + DIGIT_WIDTH * 3, digit);
 
     wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.ymd_win, DIGIT_HEIGHT, 1 + 4 * 1 + 4 * DIGIT_WIDTH, "/");
@@ -169,8 +188,11 @@ static void draw_windows(void)
     wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.ymd_win, 0, 31, "MONTH");
 
-    draw_digit_in_window(dayday.ymd_win, 1, 31, dayday.event.dm / 10);
-    draw_digit_in_window(dayday.ymd_win, 1, 31 + 1 + DIGIT_WIDTH, dayday.event.dm % 10);
+    digit = dayday.event.dm / 10;
+    if (digit)
+        draw_digit_in_window(dayday.ymd_win, 1, 31, digit);
+    digit = dayday.event.dm % 10;
+    draw_digit_in_window(dayday.ymd_win, 1, 31 + 1 + DIGIT_WIDTH, digit);
 
     wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.ymd_win, DIGIT_HEIGHT, 31 + 2 * 1 + 2 * DIGIT_WIDTH, "/");
@@ -178,8 +200,11 @@ static void draw_windows(void)
     wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.ymd_win, 0, 47, "DAY");
 
-    draw_digit_in_window(dayday.ymd_win, 1, 47, dayday.event.dd / 10);
-    draw_digit_in_window(dayday.ymd_win, 1, 47 + 1 + DIGIT_WIDTH, dayday.event.dd % 10);
+    digit = dayday.event.dd / 10;
+    if (digit)
+        draw_digit_in_window(dayday.ymd_win, 1, 47, digit);
+    digit = dayday.event.dd % 10;
+    draw_digit_in_window(dayday.ymd_win, 1, 47 + 1 + DIGIT_WIDTH, digit);
 
     wrefresh(dayday.ymd_win);
 }
