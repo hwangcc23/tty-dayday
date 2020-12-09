@@ -52,6 +52,9 @@ struct dayday
     bool running;
 };
 
+#define DAYDAY_DIGIT_COLOR_0 0
+#define DAYDAY_DIGIT_COLOR_1 1
+#define DAYDAY_NAME_COLOR 2
 #define YMD_WIN_HEIGHT 22
 #define YMD_WIN_WIDTH 60
 
@@ -83,9 +86,9 @@ static int init_windows(void)
     curs_set(false);
     clear();
 
-    init_pair(0, dayday.bgcolor, dayday.bgcolor);
-    init_pair(1, dayday.bgcolor, dayday.color);
-    init_pair(2, dayday.color, dayday.bgcolor);
+    init_pair(DAYDAY_NAME_COLOR, dayday.color, dayday.bgcolor);
+    init_pair(DAYDAY_DIGIT_COLOR_0, dayday.bgcolor, dayday.bgcolor);
+    init_pair(DAYDAY_DIGIT_COLOR_1, dayday.bgcolor, dayday.color);
 
     refresh();
 
@@ -116,11 +119,11 @@ static int init_windows(void)
 
 static void draw_windows(void)
 {
-    wbkgdset(dayday.msg_win, (COLOR_PAIR(2)));
+    wbkgdset(dayday.msg_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.msg_win, dayday.ymd_win_geo.y - 1, 0, dayday.event.name);
     wrefresh(dayday.msg_win);
 
-    wbkgdset(dayday.ymd_win, (COLOR_PAIR(2)));
+    wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.ymd_win, 0, 8, "YEAR");
     mvwaddstr(dayday.ymd_win, 0, 31, "MONTH");
     mvwaddstr(dayday.ymd_win, 0, 47, "DAY");
