@@ -36,7 +36,7 @@ struct dayday
     int color;
 
     struct {
-        char *name;              /* Name of the event to countdown */
+        char *name;              /* Name of the event */
         struct tm date;         /* Date of the event */
         int dy, dm, dd, days;   /* delta year/mon/day and delta days */
     } event;
