@@ -55,7 +55,9 @@ struct dayday
 #define DAYDAY_DIGIT_COLOR_0 0
 #define DAYDAY_DIGIT_COLOR_1 1
 #define DAYDAY_NAME_COLOR 2
-#define YMD_WIN_HEIGHT 22
+#define DIGIT_WIDTH 6
+#define DIGIT_HEIGHT 5
+#define YMD_WIN_HEIGHT 7
 #define YMD_WIN_WIDTH 60
 
 int ver_main = 0;
@@ -76,6 +78,20 @@ const struct option options[] =
 const char *optstring = "hve:d:su";
 
 static const int mon_days[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+const int digit_pixels[][15] =
+{
+     {1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1}, /* 0 */
+     {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1}, /* 1 */
+     {1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1}, /* 2 */
+     {1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1}, /* 3 */
+     {1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1}, /* 4 */
+     {1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1}, /* 5 */
+     {1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1}, /* 6 */
+     {1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1}, /* 7 */
+     {1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1}, /* 8 */
+     {1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1}, /* 9 */
+};
 
 static int init_windows(void)
 {
@@ -117,16 +133,54 @@ static int init_windows(void)
     return 0;
 }
 
+static void draw_digit_in_window(WINDOW *win, int y, int x, int digit)
+{
+    int i, sx;
+
+    for (i = 0, sx = x; i < (DIGIT_WIDTH * DIGIT_HEIGHT); i++, sx++) {
+        if (sx == x + DIGIT_WIDTH) {
+            sx = x;
+            y++;
+        }
+
+        wbkgdset(win, COLOR_PAIR(digit_pixels[digit][i / 2] ? DAYDAY_DIGIT_COLOR_1 : DAYDAY_DIGIT_COLOR_0));
+        mvwaddch(win, y, sx, ' ');
+    }
+}
+
 static void draw_windows(void)
 {
     wbkgdset(dayday.msg_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
-    mvwaddstr(dayday.msg_win, dayday.ymd_win_geo.y - 1, 0, dayday.event.name);
+    mvwaddstr(dayday.msg_win, 0, 0, dayday.event.name);
+
     wrefresh(dayday.msg_win);
 
     wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.ymd_win, 0, 8, "YEAR");
+
+    draw_digit_in_window(dayday.ymd_win, 1, 1, dayday.event.dy / 1000);
+    draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 + DIGIT_WIDTH, (dayday.event.dy % 1000 ) / 100);
+    draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 * 2 + DIGIT_WIDTH * 2, (dayday.event.dy % 100) / 10);
+    draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 * 3 + DIGIT_WIDTH * 3, dayday.event.dy % 10);
+
+    wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
+    mvwaddstr(dayday.ymd_win, DIGIT_HEIGHT, 1 + 4 * 1 + 4 * DIGIT_WIDTH, "/");
+
+    wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.ymd_win, 0, 31, "MONTH");
+
+    draw_digit_in_window(dayday.ymd_win, 1, 31, dayday.event.dm / 10);
+    draw_digit_in_window(dayday.ymd_win, 1, 31 + 1 + DIGIT_WIDTH, dayday.event.dm % 10);
+
+    wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
+    mvwaddstr(dayday.ymd_win, DIGIT_HEIGHT, 31 + 2 * 1 + 2 * DIGIT_WIDTH, "/");
+
+    wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.ymd_win, 0, 47, "DAY");
+
+    draw_digit_in_window(dayday.ymd_win, 1, 47, dayday.event.dd / 10);
+    draw_digit_in_window(dayday.ymd_win, 1, 47 + 1 + DIGIT_WIDTH, dayday.event.dd % 10);
+
     wrefresh(dayday.ymd_win);
 }
 
