@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 struct dayday
@@ -35,13 +36,15 @@ struct dayday
     int color;
 
     struct {
-        char *str;
-        /* struct tm *tm; */
+        char *name;              /* Name of the event to count down */
+        struct tm date;         /* Date to count down */
+        int dy, dm, dd, days;   /* delta year/mon/day and delta days */
     } event;
 
     WINDOW *msg_win;
 
     WINDOW *ymd_win;
+
     struct {
         int y, x;
         int w, h;
@@ -67,7 +70,9 @@ const struct option options[] =
 
 const char *optstring = "hve:d:su";
 
-static int init(void)
+static const int mon_days[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+static int init_windows(void)
 {
     initscr();
     cbreak();
@@ -82,7 +87,7 @@ static int init(void)
 
     refresh();
 
-    dayday.msg_win = newwin(1, strlen(dayday.event.str), 0, 0);
+    dayday.msg_win = newwin(1, strlen(dayday.event.name), 0, 0);
     if (!dayday.msg_win) {
         fprintf(stderr, "Failed to create the Window msg_win\n");
         return -1;
@@ -98,7 +103,7 @@ static int init(void)
 static void draw_windows(void)
 {
     wbkgdset(dayday.msg_win, (COLOR_PAIR(2)));
-    mvwaddstr(dayday.msg_win, 0, 0, dayday.event.str);
+    mvwaddstr(dayday.msg_win, 0, 0, dayday.event.name);
     wrefresh(dayday.msg_win);
 }
 
@@ -117,9 +122,49 @@ static void get_keys(void)
     }
 }
 
+static int count_leap_years(struct tm *date)
+{
+    int years = date->tm_year;
+
+    if (date->tm_mon <= 2)
+        years--;
+
+    return years / 4 - years / 100 + years / 400;
+}
+
+static void count_days(void)
+{
+    time_t raw;
+    struct tm *date;
+    struct tm *local;
+    long d1, d2;
+    int i;
+
+    date = &dayday.event.date;
+
+    time(&raw);
+    local = localtime(&raw);
+
+    d1 = date->tm_year * 365 + date->tm_mday;
+    for (i = 0; i < date->tm_mon; i++)
+        d1 += mon_days[date->tm_mon];
+    d1 += count_leap_years(date);
+
+    d2 = local->tm_year * 365 + local->tm_mday;
+    for (i = 0; i < local->tm_mon; i++)
+        d2 += mon_days[local->tm_mon];
+    d2 += count_leap_years(local);
+
+    dayday.event.days = d2 - d1;
+    dayday.event.dy = dayday.event.days / 365;
+    dayday.event.dm = (dayday.event.days % 365) / 30;
+    dayday.event.dd = (dayday.event.days % 365) % 30;
+}
+
 int main(int argc, char ** argv)
 {
     int longindex, c;
+    int ret, mm, dd, yy;
 
     memset(&dayday, 0, sizeof(struct dayday));
     dayday.color = COLOR_GREEN;
@@ -139,10 +184,19 @@ int main(int argc, char ** argv)
             break;
 
         case 'e':
-            dayday.event.str = strdup(optarg);
+            dayday.event.name = strdup(optarg);
             break;
 
         case 'd':
+            ret = sscanf(optarg, "%d/%d/%d", &mm, &dd, &yy);
+            if (ret != 3) {
+                fprintf(stderr, "Invalid format of the date argument: %s\n", optarg);
+                return EXIT_FAILURE;
+            } else {
+                dayday.event.date.tm_year = yy - 1900;
+                dayday.event.date.tm_mon = mm - 1;
+                dayday.event.date.tm_mday = dd;
+            }
             break;
 
         case 's':
@@ -157,14 +211,23 @@ int main(int argc, char ** argv)
         }
     }
 
-    if (argc != optind || !dayday.event.str) {
-        fprintf(stderr, "Invalid arguments or no input event\n");
+    if (!dayday.event.date.tm_year || !dayday.event.date.tm_mon || !dayday.event.date.tm_mday) {
+        fprintf(stderr, "Date is not given\n");
+        return EXIT_FAILURE;
+    }
+    if (!dayday.event.name) {
+        fprintf(stderr, "Event is not given\n");
+        return EXIT_FAILURE;
+    }
+    if (argc != optind) {
+        fprintf(stderr, "Invalid arguments\n");
         return EXIT_FAILURE;
     }
 
-    init();
+    init_windows();
 
     while (dayday.running) {
+        count_days();
         draw_windows();
         get_keys();
     }
