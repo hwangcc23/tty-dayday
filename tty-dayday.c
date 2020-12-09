@@ -44,7 +44,6 @@ struct dayday
     WINDOW *msg_win;
 
     WINDOW *ymd_win;
-
     struct {
         int y, x;
         int w, h;
@@ -52,6 +51,9 @@ struct dayday
 
     bool running;
 };
+
+#define YMD_WIN_HEIGHT 22
+#define YMD_WIN_WIDTH 60
 
 int ver_main = 0;
 int ver_min = 1;
@@ -87,13 +89,25 @@ static int init_windows(void)
 
     refresh();
 
-    dayday.msg_win = newwin(1, strlen(dayday.event.name), 0, 0);
+    dayday.ymd_win_geo.y = 1;
+    dayday.ymd_win_geo.x = 0;
+    dayday.ymd_win_geo.w = YMD_WIN_WIDTH;
+    dayday.ymd_win_geo.h = YMD_WIN_HEIGHT;
+
+    dayday.msg_win = newwin(1, strlen(dayday.event.name), dayday.ymd_win_geo.y - 1, 0);
     if (!dayday.msg_win) {
         fprintf(stderr, "Failed to create the Window msg_win\n");
         return -1;
     }
 
+    dayday.ymd_win = newwin(dayday.ymd_win_geo.h, dayday.ymd_win_geo.w, dayday.ymd_win_geo.y, dayday.ymd_win_geo.x);
+    if (!dayday.ymd_win) {
+        fprintf(stderr, "Failed to create the Window ymd_win\n");
+        return -1;
+    }
+
     wrefresh(dayday.msg_win);
+    wrefresh(dayday.ymd_win);
 
     dayday.running = true;
 
@@ -103,8 +117,14 @@ static int init_windows(void)
 static void draw_windows(void)
 {
     wbkgdset(dayday.msg_win, (COLOR_PAIR(2)));
-    mvwaddstr(dayday.msg_win, 0, 0, dayday.event.name);
+    mvwaddstr(dayday.msg_win, dayday.ymd_win_geo.y - 1, 0, dayday.event.name);
     wrefresh(dayday.msg_win);
+
+    wbkgdset(dayday.ymd_win, (COLOR_PAIR(2)));
+    mvwaddstr(dayday.ymd_win, 0, 8, "YEAR");
+    mvwaddstr(dayday.ymd_win, 0, 31, "MONTH");
+    mvwaddstr(dayday.ymd_win, 0, 47, "DAY");
+    wrefresh(dayday.ymd_win);
 }
 
 static void get_keys(void)
