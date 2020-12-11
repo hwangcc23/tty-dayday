@@ -59,6 +59,7 @@ struct dayday
 #define DIGIT_HEIGHT 5
 #define YMD_WIN_HEIGHT 7
 #define YMD_WIN_WIDTH 60
+#define DAYDAY_GET_KEY_DELAY_SEC 60
 
 int ver_main = 0;
 int ver_min = 1;
@@ -108,6 +109,7 @@ static int init_windows(void)
     initscr();
     cbreak();
     noecho();
+    nodelay(stdscr, true);
     start_color();
     curs_set(false);
     clear();
@@ -221,7 +223,24 @@ static void draw_windows(void)
 
 static void get_keys(void)
 {
-    int key;
+    fd_set fds;
+    struct timeval timeout;
+    int ret, key;
+
+    /*
+     * In no-delay mode, if  no input is waiting, wgetch() returns ERR directly.
+     * To avoid occupying the CPU resource, use select() to monitor an input
+     * from STDIN.
+     */
+
+    FD_ZERO(&fds);
+    FD_SET(STDIN_FILENO, &fds);
+    timeout.tv_sec = DAYDAY_GET_KEY_DELAY_SEC;
+    timeout.tv_usec = 0;
+
+    ret = select(1, &fds, NULL, NULL, &timeout);
+    if (ret <= 0)
+        return ;
 
     switch (key = wgetch(stdscr)) {
     case 'q':
