@@ -20,7 +20,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 #include <getopt.h>
 #include <ncurses.h>
 #include <stdbool.h>
@@ -65,7 +64,7 @@ int ver_main = 0;
 int ver_min = 1;
 struct dayday dayday;
 
-const struct option options[] =                                                                          
+const struct option options[] =
 {
     { "help", 0, 0, 'h' },
     { "version", 0, 0, 'v' },
@@ -228,7 +227,7 @@ static void get_keys(void)
     int ret, key;
 
     /*
-     * In no-delay mode, if  no input is waiting, wgetch() returns ERR directly.
+     * In no-delay mode, if no input is waiting, wgetch() returns ERR directly.
      * To avoid occupying the CPU resource, use select() to monitor an input
      * from STDIN.
      */
