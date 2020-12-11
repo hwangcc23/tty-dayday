@@ -19,3 +19,5 @@ Options:
   -h|--help         Print the help messages and exit
 
 $> tty-dayday -e 'Working for a living' -d 10/13/2003
+
+![name-of-you-image](https://raw.githubusercontent.com/hwangcc23/tty-dayday/main/screenshot-tty-dayday.png)
