@@ -50,6 +50,7 @@ struct dayday
     } ymd_win_geo;
 
     bool running;
+    bool count_since;
 };
 
 #define NR_COLORS 8
@@ -141,8 +142,6 @@ static int init_windows(void)
 
     wrefresh(dayday.msg_win);
     wrefresh(dayday.ymd_win);
-
-    dayday.running = true;
 
     return 0;
 }
@@ -288,7 +287,12 @@ static void count_days(void)
         d2 += mon_days[local->tm_mon];
     d2 += count_leap_years(local);
 
-    dayday.event.days = d2 - d1;
+    if (dayday.count_since && (d2 >= d1))
+        dayday.event.days = d2 - d1;
+    else if (!dayday.count_since && (d1 >= d2))
+        dayday.event.days = d1 - d2;
+    else
+        dayday.event.days = 0;
     dayday.event.dy = dayday.event.days / 365;
     dayday.event.dm = (dayday.event.days % 365) / 30;
     dayday.event.dd = (dayday.event.days % 365) % 30;
@@ -304,6 +308,7 @@ int main(int argc, char ** argv)
     memset(&dayday, 0, sizeof(struct dayday));
     dayday.color = COLOR_GREEN;
     dayday.bgcolor = COLOR_BLACK;
+    dayday.count_since = true;
 
     for (;;) {
         c = getopt_long(argc, argv, optstring, options, &longindex);
@@ -338,9 +343,11 @@ int main(int argc, char ** argv)
             break;
 
         case 's':
+            dayday.count_since = true;
             break;
 
         case 'u':
+            dayday.count_since = false;
             break;
 
         case 't':
@@ -357,7 +364,7 @@ int main(int argc, char ** argv)
         }
     }
 
-    if (!dayday.event.date.tm_year || !dayday.event.date.tm_mon || !dayday.event.date.tm_mday) {
+    if (!dayday.event.date.tm_year || !dayday.event.date.tm_mday) {
         fprintf(stderr, "Date is not given\n");
         return EXIT_FAILURE;
     }
@@ -371,6 +378,8 @@ int main(int argc, char ** argv)
     }
 
     init_windows();
+
+    dayday.running = true;
 
     while (dayday.running) {
         count_days();
