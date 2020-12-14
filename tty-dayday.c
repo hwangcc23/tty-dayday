@@ -256,9 +256,9 @@ static void get_keys(void)
 
 static int count_leap_years(struct tm *date)
 {
-    int years = date->tm_year;
+    int years = date->tm_year + 1900;
 
-    if (date->tm_mon <= 2)
+    if ((date->tm_mon + 1) <= 2)
         years--;
 
     return years / 4 - years / 100 + years / 400;
@@ -277,12 +277,12 @@ static void count_days(void)
     time(&raw);
     local = localtime(&raw);
 
-    d1 = date->tm_year * 365 + date->tm_mday;
+    d1 = (date->tm_year + 1900) * 365 + date->tm_mday;
     for (i = 0; i < date->tm_mon; i++)
         d1 += mon_days[date->tm_mon];
     d1 += count_leap_years(date);
 
-    d2 = local->tm_year * 365 + local->tm_mday;
+    d2 = (local->tm_year + 1900) * 365 + local->tm_mday;
     for (i = 0; i < local->tm_mon; i++)
         d2 += mon_days[local->tm_mon];
     d2 += count_leap_years(local);
