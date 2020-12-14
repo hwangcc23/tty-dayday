@@ -279,12 +279,12 @@ static void count_days(void)
 
     d1 = (date->tm_year + 1900) * 365 + date->tm_mday;
     for (i = 0; i < date->tm_mon; i++)
-        d1 += mon_days[date->tm_mon];
+        d1 += mon_days[i];
     d1 += count_leap_years(date);
 
     d2 = (local->tm_year + 1900) * 365 + local->tm_mday;
     for (i = 0; i < local->tm_mon; i++)
-        d2 += mon_days[local->tm_mon];
+        d2 += mon_days[i];
     d2 += count_leap_years(local);
 
     if (dayday.count_since && (d2 >= d1))
