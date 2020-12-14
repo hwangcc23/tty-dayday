@@ -21,6 +21,7 @@
  */
 
 #include <getopt.h>
+#include <limits.h>
 #include <ncurses.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -51,6 +52,7 @@ struct dayday
     bool running;
 };
 
+#define NR_COLORS 8
 #define DAYDAY_DIGIT_COLOR_0 0
 #define DAYDAY_DIGIT_COLOR_1 1
 #define DAYDAY_NAME_COLOR 2
@@ -72,10 +74,11 @@ const struct option options[] =
     { "date", 1, 0, 'd' },
     { "since", 1, 0, 's' },
     { "until", 1, 0, 'u' },
+    { "tint", 1, 0, 't' },
     { NULL, 0, 0, 0 },
 };
 
-const char *optstring = "hve:d:su";
+const char *optstring = "hve:d:sut:";
 
 static const int mon_days[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
@@ -295,6 +298,8 @@ int main(int argc, char ** argv)
 {
     int longindex, c;
     int ret, mm, dd, yy;
+    char *endptr;
+    long val;
 
     memset(&dayday, 0, sizeof(struct dayday));
     dayday.color = COLOR_GREEN;
@@ -336,6 +341,14 @@ int main(int argc, char ** argv)
             break;
 
         case 'u':
+            break;
+
+        case 't':
+            val = strtol(optarg, &endptr, 0);
+            if (val == LONG_MAX || val == LONG_MIN || val < 0 || *endptr != '\0' || endptr == optarg)
+                fprintf(stderr, "Invalid argument %s\n", optarg);
+            else
+                dayday.color = val % NR_COLORS;
             break;
 
         default:
