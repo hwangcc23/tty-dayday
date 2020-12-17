@@ -101,10 +101,18 @@ static void usage(void)
 {
     fprintf(stdout, "Usage: tty-dayday -e NAME_OF_EVENT - d DATE_IN_MM/DD/YYYY [options]\n");
     fprintf(stdout, "Options:\n");
-    fprintf(stdout, "  -s|--since        Count days SINCE the given date\n");
-    fprintf(stdout, "  -u|--until        Count days until the given date\n");
-    fprintf(stdout, "  -v|--version      Print the version number and exit\n");
-    fprintf(stdout, "  -h|--help         Print the help messages and exit\n");
+    fprintf(stdout, "  -s|--since            Count days SINCE the given date\n");
+    fprintf(stdout, "  -u|--until            Count days until the given date\n");
+    fprintf(stdout, "  -t|--tint [COLOR]     Color the font and numbers\n");
+    fprintf(stdout, "                        COLOR = 1 -> Red\n");
+    fprintf(stdout, "                        COLOR = 2 -> Green\n");
+    fprintf(stdout, "                        COLOR = 3 -> Yellow\n");
+    fprintf(stdout, "                        COLOR = 4 -> Blue\n");
+    fprintf(stdout, "                        COLOR = 5 -> Magenta\n");
+    fprintf(stdout, "                        COLOR = 6 -> Cyan\n");
+    fprintf(stdout, "                        COLOR = 7 -> White\n");
+    fprintf(stdout, "  -v|--version          Print the version number and exit\n");
+    fprintf(stdout, "  -h|--help             Print the help messages and exit\n");
 }
 
 static int init_windows(void)
@@ -354,8 +362,34 @@ int main(int argc, char ** argv)
             val = strtol(optarg, &endptr, 0);
             if (val == LONG_MAX || val == LONG_MIN || val < 0 || *endptr != '\0' || endptr == optarg)
                 fprintf(stderr, "Invalid argument %s\n", optarg);
-            else
-                dayday.color = val % NR_COLORS;
+            else {
+                val %= NR_COLORS;
+                switch (val) {
+                case 1:
+                    dayday.color = COLOR_RED;
+                    break;
+                case 2:
+                    dayday.color = COLOR_GREEN;
+                    break;
+                case 3:
+                    dayday.color = COLOR_YELLOW;
+                    break;
+                case 4:
+                    dayday.color = COLOR_BLUE;
+                    break;
+                case 5:
+                    dayday.color = COLOR_MAGENTA;
+                    break;
+                case 6:
+                    dayday.color = COLOR_CYAN;
+                    break;
+                case 7:
+                    dayday.color = COLOR_WHITE;
+                    break;
+                default:
+                    break;
+                }
+            }
             break;
 
         default:
