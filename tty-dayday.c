@@ -115,34 +115,46 @@ static void usage(void)
     fprintf(stdout, "  -h|--help             Print the help messages and exit\n");
 }
 
-static void tint(int val)
+static void tint(int color)
 {
-    val %= NR_COLORS;
+    color %= NR_COLORS;
 
-    switch (val) {
+    switch (color) {
     case 1:
         dayday.color = COLOR_RED;
         break;
+
     case 2:
         dayday.color = COLOR_GREEN;
         break;
+
     case 3:
         dayday.color = COLOR_YELLOW;
         break;
+
     case 4:
         dayday.color = COLOR_BLUE;
         break;
+
     case 5:
         dayday.color = COLOR_MAGENTA;
         break;
+
     case 6:
         dayday.color = COLOR_CYAN;
         break;
+
     case 7:
         dayday.color = COLOR_WHITE;
         break;
+
     default:
         break;
+    }
+
+    if (dayday.running) {
+        init_pair(DAYDAY_NAME_COLOR, dayday.color, dayday.bgcolor);
+        init_pair(DAYDAY_DIGIT_COLOR_1, dayday.bgcolor, dayday.color);
     }
 }
 
@@ -265,7 +277,7 @@ static void get_keys(void)
 {
     fd_set fds;
     struct timeval timeout;
-    int ret, key;
+    int ret, key, color;
 
     /*
      * In no-delay mode, if no input is waiting, wgetch() returns ERR directly.
@@ -286,6 +298,19 @@ static void get_keys(void)
     case 'q':
     case 'Q':
         dayday.running = false;
+        break;
+
+    case 't':
+    case 'T':
+        /*
+         * Use the next colors (in the order of COLOR numbers) to tint fonts.
+         * Since only numbers 1 ~ (NR_COLORS - 1) are valid,
+         * add a check for bypassing the number 0.
+         */
+        color = (dayday.color + 1) % NR_COLORS;
+        if (!color)
+            color = 1;
+        tint(color);
         break;
 
     default:
