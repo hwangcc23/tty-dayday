@@ -115,6 +115,37 @@ static void usage(void)
     fprintf(stdout, "  -h|--help             Print the help messages and exit\n");
 }
 
+static void tint(int val)
+{
+    val %= NR_COLORS;
+
+    switch (val) {
+    case 1:
+        dayday.color = COLOR_RED;
+        break;
+    case 2:
+        dayday.color = COLOR_GREEN;
+        break;
+    case 3:
+        dayday.color = COLOR_YELLOW;
+        break;
+    case 4:
+        dayday.color = COLOR_BLUE;
+        break;
+    case 5:
+        dayday.color = COLOR_MAGENTA;
+        break;
+    case 6:
+        dayday.color = COLOR_CYAN;
+        break;
+    case 7:
+        dayday.color = COLOR_WHITE;
+        break;
+    default:
+        break;
+    }
+}
+
 static int init_windows(void)
 {
     initscr();
@@ -363,32 +394,7 @@ int main(int argc, char ** argv)
             if (val == LONG_MAX || val == LONG_MIN || val < 0 || *endptr != '\0' || endptr == optarg)
                 fprintf(stderr, "Invalid argument %s\n", optarg);
             else {
-                val %= NR_COLORS;
-                switch (val) {
-                case 1:
-                    dayday.color = COLOR_RED;
-                    break;
-                case 2:
-                    dayday.color = COLOR_GREEN;
-                    break;
-                case 3:
-                    dayday.color = COLOR_YELLOW;
-                    break;
-                case 4:
-                    dayday.color = COLOR_BLUE;
-                    break;
-                case 5:
-                    dayday.color = COLOR_MAGENTA;
-                    break;
-                case 6:
-                    dayday.color = COLOR_CYAN;
-                    break;
-                case 7:
-                    dayday.color = COLOR_WHITE;
-                    break;
-                default:
-                    break;
-                }
+                tint(val);
             }
             break;
 
