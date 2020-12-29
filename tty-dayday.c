@@ -49,6 +49,12 @@ struct dayday
         int w, h;
     } ymd_win_geo;
 
+    WINDOW *help_win;
+    struct {
+        int y, x;
+        int w, h;
+    } help_win_geo;
+
     bool running;
     bool count_since;
 };
@@ -57,6 +63,7 @@ struct dayday
 #define DAYDAY_DIGIT_COLOR_0 0
 #define DAYDAY_DIGIT_COLOR_1 1
 #define DAYDAY_NAME_COLOR 2
+#define DAYDAY_HELP_COLOR 3
 #define DIGIT_WIDTH 6
 #define DIGIT_HEIGHT 5
 #define YMD_WIN_HEIGHT 7
@@ -66,6 +73,7 @@ struct dayday
 int ver_main = 0;
 int ver_min = 1;
 struct dayday dayday;
+const char *msg_in_help_win = "Press q/Q key to quit, t/T key to Tint";
 
 const struct option options[] =
 {
@@ -171,6 +179,7 @@ static int init_windows(void)
     init_pair(DAYDAY_NAME_COLOR, dayday.color, dayday.bgcolor);
     init_pair(DAYDAY_DIGIT_COLOR_0, dayday.bgcolor, dayday.bgcolor);
     init_pair(DAYDAY_DIGIT_COLOR_1, dayday.bgcolor, dayday.color);
+    init_pair(DAYDAY_HELP_COLOR, COLOR_WHITE, COLOR_RED);
 
     refresh();
 
@@ -178,6 +187,11 @@ static int init_windows(void)
     dayday.ymd_win_geo.x = 0;
     dayday.ymd_win_geo.w = YMD_WIN_WIDTH;
     dayday.ymd_win_geo.h = YMD_WIN_HEIGHT;
+
+    dayday.help_win_geo.y = LINES - 1;
+    dayday.help_win_geo.x = 0;
+    dayday.help_win_geo.w = COLS;
+    dayday.help_win_geo.h = 1;
 
     dayday.msg_win = newwin(1, strlen(dayday.event.name), dayday.ymd_win_geo.y - 1, 0);
     if (!dayday.msg_win) {
@@ -191,8 +205,15 @@ static int init_windows(void)
         return -1;
     }
 
+    dayday.help_win = newwin(dayday.help_win_geo.h, dayday.help_win_geo.w, dayday.help_win_geo.y, dayday.help_win_geo.x);
+    if (!dayday.help_win) {
+        fprintf(stderr, "Failed to create the Window help_win\n");
+        return -1;
+    }
+
     wrefresh(dayday.msg_win);
     wrefresh(dayday.ymd_win);
+    wrefresh(dayday.help_win);
 
     return 0;
 }
@@ -215,6 +236,7 @@ static void draw_digit_in_window(WINDOW *win, int y, int x, int digit)
 static void draw_windows(void)
 {
     int digit, pre_digit;
+    int i;
 
     wbkgdset(dayday.msg_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.msg_win, 0, 0, dayday.event.name);
@@ -271,6 +293,13 @@ static void draw_windows(void)
     draw_digit_in_window(dayday.ymd_win, 1, 47 + 1 + DIGIT_WIDTH, digit);
 
     wrefresh(dayday.ymd_win);
+
+    wbkgdset(dayday.help_win, (COLOR_PAIR(DAYDAY_HELP_COLOR)));
+    mvwaddstr(dayday.help_win, 0, 0, msg_in_help_win);
+    for (i = strlen(msg_in_help_win); i < COLS; i++)
+        mvwaddch(dayday.help_win, 0, i, ' ');
+
+    wrefresh(dayday.help_win);
 }
 
 static void get_keys(void)
