@@ -57,6 +57,7 @@ struct dayday
 
     bool running;
     bool count_since;
+    bool hide_help;
 };
 
 #define NR_COLORS 8
@@ -73,7 +74,7 @@ struct dayday
 int ver_main = 0;
 int ver_min = 1;
 struct dayday dayday;
-const char *msg_in_help_win = "Press q/Q key to quit, t/T key to Tint";
+const char *msg_in_help_win = "Press q/Q key to quit, t/T key to Tint, h/H key to hide these help messages";
 
 const struct option options[] =
 {
@@ -294,10 +295,16 @@ static void draw_windows(void)
 
     wrefresh(dayday.ymd_win);
 
-    wbkgdset(dayday.help_win, (COLOR_PAIR(DAYDAY_HELP_COLOR)));
-    mvwaddstr(dayday.help_win, 0, 0, msg_in_help_win);
-    for (i = strlen(msg_in_help_win); i < COLS; i++)
-        mvwaddch(dayday.help_win, 0, i, ' ');
+    if (dayday.hide_help) {
+        wbkgdset(dayday.help_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
+        for (i = 0; i < COLS; i++)
+            mvwaddch(dayday.help_win, 0, i, ' ');
+    } else {
+        wbkgdset(dayday.help_win, (COLOR_PAIR(DAYDAY_HELP_COLOR)));
+        mvwaddstr(dayday.help_win, 0, 0, msg_in_help_win);
+        for (i = strlen(msg_in_help_win); i < COLS; i++)
+            mvwaddch(dayday.help_win, 0, i, ' ');
+    }
 
     wrefresh(dayday.help_win);
 }
@@ -341,6 +348,10 @@ static void get_keys(void)
             color = 1;
         tint(color);
         break;
+
+    case 'h':
+    case 'H':
+       dayday.hide_help = dayday.hide_help ? false : true;
 
     default:
         break;
@@ -473,6 +484,7 @@ int main(int argc, char ** argv)
 
     init_windows();
 
+    dayday.hide_help = false;
     dayday.running = true;
 
     while (dayday.running) {
