@@ -72,7 +72,7 @@ struct dayday
 #define DAYDAY_GET_KEY_DELAY_SEC 60
 
 int ver_main = 0;
-int ver_min = 1;
+int ver_min = 2;
 struct dayday dayday;
 const char *msg_in_help_win = "Press q/Q key to quit, t/T key to Tint, h/H key to hide these help messages";
 
