@@ -9,6 +9,9 @@ ifeq ($(shell sh -c 'which ncurses6-config>/dev/null 2>/dev/null && echo y'), y)
 else ifeq ($(shell sh -c 'which ncurses5-config>/dev/null 2>/dev/null && echo y'), y)
 	CFLAGS += $$(ncurses5-config --cflags)
 	LDFLAGS += $$(ncurses5-config --libs)
+else
+	CFLAGS += $$(pkg-config --cflags ncurses)
+	LDFLAGS += $$(pkg-config --libs ncurses)
 endif
 
 tty-dayday: ${SRC}
