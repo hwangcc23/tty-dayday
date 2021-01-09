@@ -239,10 +239,18 @@ static void draw_windows(void)
     int digit, pre_digit;
     int i;
 
+    /*
+     * Draw the message window.
+     */
+
     wbkgdset(dayday.msg_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.msg_win, 0, 0, dayday.event.name);
 
     wrefresh(dayday.msg_win);
+
+    /*
+     * Draw the YYYY/MM/DD window.
+     */
 
     wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
     mvwaddstr(dayday.ymd_win, 0, 8, "YEAR");
@@ -294,6 +302,10 @@ static void draw_windows(void)
     draw_digit_in_window(dayday.ymd_win, 1, 47 + 1 + DIGIT_WIDTH, digit);
 
     wrefresh(dayday.ymd_win);
+
+    /*
+     * Draw the help window.
+     */
 
     if (dayday.hide_help) {
         wbkgdset(dayday.help_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
@@ -351,7 +363,8 @@ static void get_keys(void)
 
     case 'h':
     case 'H':
-       dayday.hide_help = dayday.hide_help ? false : true;
+        dayday.hide_help = dayday.hide_help ? false : true;
+        break;
 
     default:
         break;
@@ -497,6 +510,8 @@ int main(int argc, char ** argv)
         delwin(dayday.msg_win);
     if (dayday.ymd_win)
         delwin(dayday.ymd_win);
+    if (dayday.help_win)
+        delwin(dayday.help_win);
 
     endwin();
 
