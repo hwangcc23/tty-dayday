@@ -49,6 +49,12 @@ struct dayday
         int w, h;
     } ymd_win_geo;
 
+    WINDOW *days_win;
+    struct {
+        int y, x;
+        int w, h;
+    } days_win_geo;
+
     WINDOW *help_win;
     struct {
         int y, x;
@@ -58,6 +64,7 @@ struct dayday
     bool running;
     bool count_since;
     bool hide_help;
+    bool ymd_format;
 };
 
 #define NR_COLORS 8
@@ -65,6 +72,7 @@ struct dayday
 #define DAYDAY_DIGIT_COLOR_1 1
 #define DAYDAY_NAME_COLOR 2
 #define DAYDAY_HELP_COLOR 3
+#define DAYDAY_BG_COLOR 4
 #define DIGIT_WIDTH 6
 #define DIGIT_HEIGHT 5
 #define YMD_WIN_HEIGHT 7
@@ -74,7 +82,7 @@ struct dayday
 int ver_main = 0;
 int ver_min = 2;
 struct dayday dayday;
-const char *msg_in_help_win = "Press q/Q key to quit, t/T key to Tint, h/H key to hide these help messages";
+const char *msg_in_help_win = "Press q/Q key to quit, t/T key to Tint, f/F key to change the format, h/H key to hide these help messages";
 
 const struct option options[] =
 {
@@ -181,6 +189,7 @@ static int init_windows(void)
     init_pair(DAYDAY_DIGIT_COLOR_0, dayday.bgcolor, dayday.bgcolor);
     init_pair(DAYDAY_DIGIT_COLOR_1, dayday.bgcolor, dayday.color);
     init_pair(DAYDAY_HELP_COLOR, COLOR_WHITE, COLOR_RED);
+    init_pair(DAYDAY_BG_COLOR, dayday.bgcolor, dayday.bgcolor);
 
     refresh();
 
@@ -188,6 +197,11 @@ static int init_windows(void)
     dayday.ymd_win_geo.x = 0;
     dayday.ymd_win_geo.w = YMD_WIN_WIDTH;
     dayday.ymd_win_geo.h = YMD_WIN_HEIGHT;
+
+    dayday.days_win_geo.y = 1;
+    dayday.days_win_geo.x = 0;
+    dayday.days_win_geo.w = YMD_WIN_WIDTH;
+    dayday.days_win_geo.h = YMD_WIN_HEIGHT;
 
     dayday.help_win_geo.y = LINES - 1;
     dayday.help_win_geo.x = 0;
@@ -206,6 +220,12 @@ static int init_windows(void)
         return -1;
     }
 
+    dayday.days_win = newwin(dayday.days_win_geo.h, dayday.days_win_geo.w, dayday.days_win_geo.y, dayday.days_win_geo.x);
+    if (!dayday.days_win) {
+        fprintf(stderr, "Failed to create the Window days_win\n");
+        return -1;
+    }
+
     dayday.help_win = newwin(dayday.help_win_geo.h, dayday.help_win_geo.w, dayday.help_win_geo.y, dayday.help_win_geo.x);
     if (!dayday.help_win) {
         fprintf(stderr, "Failed to create the Window help_win\n");
@@ -214,6 +234,7 @@ static int init_windows(void)
 
     wrefresh(dayday.msg_win);
     wrefresh(dayday.ymd_win);
+    wrefresh(dayday.days_win);
     wrefresh(dayday.help_win);
 
     return 0;
@@ -249,70 +270,112 @@ static void draw_windows(void)
     wrefresh(dayday.msg_win);
 
     /*
+     * Clear YYYY/MM/DD and Days window.
+     */
+
+    wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_BG_COLOR)));
+    wclear(dayday.ymd_win);
+    wrefresh(dayday.ymd_win);
+    wbkgdset(dayday.days_win, (COLOR_PAIR(DAYDAY_BG_COLOR)));
+    wclear(dayday.days_win);
+    wrefresh(dayday.days_win);
+
+    /*
      * Draw the YYYY/MM/DD window.
      */
 
-    wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
-    mvwaddstr(dayday.ymd_win, 0, 8, "YEAR");
+    if (dayday.ymd_format) {
+        wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
+
+        mvwaddstr(dayday.ymd_win, 0, 8, "YEAR");
+
+        /*
+         * Draw numbers to show the counting days.
+         * On drawing digits of the number, the zero in the number should be ignore
+         * to avoid users' confusion. For example, draw "  17" rather than "0017".
+         * In the implementation below, use digit and pre_digit to check whether
+         * the zero digit should be ignored or not.
+         */
+
+        digit = dayday.event.dy / 1000;
+        if (digit)
+            draw_digit_in_window(dayday.ymd_win, 1, 1, digit);
+        pre_digit = digit;
+        digit = (dayday.event.dy % 1000 ) / 100;
+        if (digit || (pre_digit && !digit))
+            draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 + DIGIT_WIDTH, digit);
+        pre_digit = pre_digit * 10 + digit;
+        digit = (dayday.event.dy % 100) / 10;
+        if (digit || (pre_digit && !digit))
+            draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 * 2 + DIGIT_WIDTH * 2, digit);
+        digit = dayday.event.dy % 10;
+        draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 * 3 + DIGIT_WIDTH * 3, digit);
+
+        wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
+        mvwaddstr(dayday.ymd_win, DIGIT_HEIGHT, 1 + 4 * 1 + 4 * DIGIT_WIDTH, "/");
+
+        wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
+        mvwaddstr(dayday.ymd_win, 0, 31, "MONTH");
+
+        digit = dayday.event.dm / 10;
+        if (digit)
+            draw_digit_in_window(dayday.ymd_win, 1, 31, digit);
+        digit = dayday.event.dm % 10;
+        draw_digit_in_window(dayday.ymd_win, 1, 31 + 1 + DIGIT_WIDTH, digit);
+
+        wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
+        mvwaddstr(dayday.ymd_win, DIGIT_HEIGHT, 31 + 2 * 1 + 2 * DIGIT_WIDTH, "/");
+
+        wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
+        mvwaddstr(dayday.ymd_win, 0, 47, "DAY");
+
+        digit = dayday.event.dd / 10;
+        if (digit)
+            draw_digit_in_window(dayday.ymd_win, 1, 47, digit);
+        digit = dayday.event.dd % 10;
+        draw_digit_in_window(dayday.ymd_win, 1, 47 + 1 + DIGIT_WIDTH, digit);
+
+        wrefresh(dayday.ymd_win);
+    }
 
     /*
-     * Draw numbers to show the counting days.
-     * On drawing digits of the number, the zero in the number should be ignore
-     * to avoid users' confusion. For example, draw "  17" rather than "0017".
-     * In the implementation below, use digit and pre_digit to check whether
-     * the zero digit should be ignored or not.
+     * Draw the Days window.
      */
 
-    digit = dayday.event.dy / 1000;
-    if (digit)
-        draw_digit_in_window(dayday.ymd_win, 1, 1, digit);
-    pre_digit = digit;
-    digit = (dayday.event.dy % 1000 ) / 100;
-    if (digit || (pre_digit && !digit))
-        draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 + DIGIT_WIDTH, digit);
-    pre_digit = pre_digit * 10 + digit;
-    digit = (dayday.event.dy % 100) / 10;
-    if (digit || (pre_digit && !digit))
-        draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 * 2 + DIGIT_WIDTH * 2, digit);
-    digit = dayday.event.dy % 10;
-    draw_digit_in_window(dayday.ymd_win, 1, 1 + 1 * 3 + DIGIT_WIDTH * 3, digit);
+    if (!dayday.ymd_format) {
+        wbkgdset(dayday.days_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
 
-    wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
-    mvwaddstr(dayday.ymd_win, DIGIT_HEIGHT, 1 + 4 * 1 + 4 * DIGIT_WIDTH, "/");
+        mvwaddstr(dayday.days_win, 0, 24, "Days");
 
-    wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
-    mvwaddstr(dayday.ymd_win, 0, 31, "MONTH");
+        /* TODO: handle > 4 digits */
+        digit = dayday.event.days / 1000;
+        if (digit)
+            draw_digit_in_window(dayday.days_win, 1, 1, digit);
+        pre_digit = digit;
+        digit = (dayday.event.days % 1000 ) / 100;
+        if (digit || (pre_digit && !digit))
+            draw_digit_in_window(dayday.days_win, 1, 1 + 1 + DIGIT_WIDTH, digit);
+        pre_digit = pre_digit * 10 + digit;
+        digit = (dayday.event.days % 100) / 10;
+        if (digit || (pre_digit && !digit))
+            draw_digit_in_window(dayday.days_win, 1, 1 + 1 * 2 + DIGIT_WIDTH * 2, digit);
+        digit = dayday.event.days % 10;
+        draw_digit_in_window(dayday.days_win, 1, 1 + 1 * 3 + DIGIT_WIDTH * 3, digit);
 
-    digit = dayday.event.dm / 10;
-    if (digit)
-        draw_digit_in_window(dayday.ymd_win, 1, 31, digit);
-    digit = dayday.event.dm % 10;
-    draw_digit_in_window(dayday.ymd_win, 1, 31 + 1 + DIGIT_WIDTH, digit);
-
-    wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
-    mvwaddstr(dayday.ymd_win, DIGIT_HEIGHT, 31 + 2 * 1 + 2 * DIGIT_WIDTH, "/");
-
-    wbkgdset(dayday.ymd_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
-    mvwaddstr(dayday.ymd_win, 0, 47, "DAY");
-
-    digit = dayday.event.dd / 10;
-    if (digit)
-        draw_digit_in_window(dayday.ymd_win, 1, 47, digit);
-    digit = dayday.event.dd % 10;
-    draw_digit_in_window(dayday.ymd_win, 1, 47 + 1 + DIGIT_WIDTH, digit);
-
-    wrefresh(dayday.ymd_win);
+        wrefresh(dayday.days_win);
+    }
 
     /*
-     * Draw the help window.
+     * Draw the Help window.
      */
 
     if (dayday.hide_help) {
-        wbkgdset(dayday.help_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
-        for (i = 0; i < COLS; i++)
-            mvwaddch(dayday.help_win, 0, i, ' ');
+        wbkgdset(dayday.help_win, (COLOR_PAIR(DAYDAY_BG_COLOR)));
+
+        wclear(dayday.help_win);
     } else {
         wbkgdset(dayday.help_win, (COLOR_PAIR(DAYDAY_HELP_COLOR)));
+
         mvwaddstr(dayday.help_win, 0, 0, msg_in_help_win);
         for (i = strlen(msg_in_help_win); i < COLS; i++)
             mvwaddch(dayday.help_win, 0, i, ' ');
@@ -364,6 +427,11 @@ static void get_keys(void)
     case 'h':
     case 'H':
         dayday.hide_help = dayday.hide_help ? false : true;
+        break;
+
+    case 'f':
+    case 'F':
+        dayday.ymd_format = dayday.ymd_format ? false : true;
         break;
 
     default:
@@ -498,6 +566,7 @@ int main(int argc, char ** argv)
     init_windows();
 
     dayday.hide_help = false;
+    dayday.ymd_format = true;
     dayday.running = true;
 
     while (dayday.running) {
@@ -510,6 +579,8 @@ int main(int argc, char ** argv)
         delwin(dayday.msg_win);
     if (dayday.ymd_win)
         delwin(dayday.ymd_win);
+    if (dayday.days_win)
+        delwin(dayday.days_win);
     if (dayday.help_win)
         delwin(dayday.help_win);
 
