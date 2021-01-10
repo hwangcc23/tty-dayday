@@ -22,6 +22,7 @@
 
 #include <getopt.h>
 #include <limits.h>
+#include <math.h>
 #include <ncurses.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -38,7 +39,7 @@ struct dayday
     struct {
         char *name;              /* Name of the event */
         struct tm date;         /* Date of the event */
-        int dy, dm, dd, days;   /* delta year/mon/day and delta days */
+        unsigned int dy, dm, dd, days;   /* delta year/mon/day and delta days */
     } event;
 
     WINDOW *msg_win;
@@ -175,6 +176,18 @@ static void tint(int color)
     }
 }
 
+static int count_num_digit(unsigned int number)
+{
+    int cnt = 0;
+
+    while (number) {
+        cnt++;
+        number /= 10;
+    }
+
+    return cnt;
+}
+
 static int init_windows(void)
 {
     initscr();
@@ -259,6 +272,7 @@ static void draw_windows(void)
 {
     int digit, pre_digit;
     int i;
+    int nr_digit, x;
 
     /*
      * Draw the message window.
@@ -343,24 +357,29 @@ static void draw_windows(void)
      */
 
     if (!dayday.ymd_format) {
-        wbkgdset(dayday.days_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
+        nr_digit = count_num_digit(dayday.event.days);
+        x = 1;
 
-        mvwaddstr(dayday.days_win, 0, 24, "Days");
-
-        /* TODO: handle > 4 digits */
-        digit = dayday.event.days / 1000;
+        digit = dayday.event.days / (unsigned int)pow(10, nr_digit - 1);
         if (digit)
-            draw_digit_in_window(dayday.days_win, 1, 1, digit);
+            draw_digit_in_window(dayday.days_win, 1, x, digit);
         pre_digit = digit;
-        digit = (dayday.event.days % 1000 ) / 100;
-        if (digit || (pre_digit && !digit))
-            draw_digit_in_window(dayday.days_win, 1, 1 + 1 + DIGIT_WIDTH, digit);
-        pre_digit = pre_digit * 10 + digit;
-        digit = (dayday.event.days % 100) / 10;
-        if (digit || (pre_digit && !digit))
-            draw_digit_in_window(dayday.days_win, 1, 1 + 1 * 2 + DIGIT_WIDTH * 2, digit);
+
+        for (i = nr_digit - 1; i > 1; i--) {
+            digit = (dayday.event.days % (unsigned int)pow(10, i) ) / (unsigned int)pow(10, i - 1);
+            if (digit || (pre_digit && !digit)) {
+                x += 1 + DIGIT_WIDTH;
+                draw_digit_in_window(dayday.days_win, 1, x, digit);
+            }
+            pre_digit = pre_digit * 10 + digit;
+        }
+
         digit = dayday.event.days % 10;
-        draw_digit_in_window(dayday.days_win, 1, 1 + 1 * 3 + DIGIT_WIDTH * 3, digit);
+        x += 1 + DIGIT_WIDTH;
+        draw_digit_in_window(dayday.days_win, 1, x, digit);
+
+        wbkgdset(dayday.days_win, (COLOR_PAIR(DAYDAY_NAME_COLOR)));
+        mvwaddstr(dayday.days_win, 0, x + DIGIT_WIDTH - 4, "DAYS");
 
         wrefresh(dayday.days_win);
     }
