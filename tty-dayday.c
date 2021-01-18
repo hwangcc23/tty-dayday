@@ -180,6 +180,9 @@ static int count_num_digit(unsigned int number)
 {
     int cnt = 0;
 
+    if (!number)
+        return 1;
+
     while (number) {
         cnt++;
         number /= 10;
