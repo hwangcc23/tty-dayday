@@ -364,7 +364,7 @@ static void draw_windows(void)
         x = 1;
 
         digit = dayday.event.days / (unsigned int)pow(10, nr_digit - 1);
-        if (digit)
+        if (digit && (nr_digit > 1))
             draw_digit_in_window(dayday.days_win, 1, x, digit);
         pre_digit = digit;
 
