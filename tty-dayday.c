@@ -117,7 +117,7 @@ const int digit_pixels[][15] =
 
 static void usage(void)
 {
-    fprintf(stdout, "Usage: tty-dayday -e NAME_OF_EVENT - d DATE_IN_MM/DD/YYYY [options]\n");
+    fprintf(stdout, "Usage: tty-dayday -e NAME_OF_EVENT -d DATE_IN_MM/DD/YYYY [options]\n");
     fprintf(stdout, "Options:\n");
     fprintf(stdout, "  -s|--since            Count days SINCE the given date (default option)\n");
     fprintf(stdout, "  -u|--until            Count days until the given date\n");
